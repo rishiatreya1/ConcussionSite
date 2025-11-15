@@ -19,7 +19,7 @@ from tracking.gaze import get_eye_center, calculate_gaze_distance
 from analysis.metrics import calculate_metrics
 from analysis.risk import assess_concussion_risk
 
-from ai.gemini_summary import generate_summary
+from ai import generate_summary
 
 mp_drawing = mp.solutions.drawing_utils
 
