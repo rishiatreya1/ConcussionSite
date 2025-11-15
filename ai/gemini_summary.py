@@ -21,7 +21,7 @@ def generate_summary(metrics, symptoms, risk_assessment, pursuit_metrics=None):
 
     try:
         # Use gemini-2.0-flash (newer, faster, free tier friendly)
-        # Falls back to gemini-1.5-flash if not available
+        # Note: Internet search requires specific API access - using enhanced prompt instead
         try:
             model = genai.GenerativeModel("gemini-2.0-flash")
         except:
@@ -65,9 +65,18 @@ RISK ASSESSMENT:
 
 Write a concise (<150 words), plain-language summary that:
 1. Explains what the patterns might suggest about light sensitivity or eye movement difficulties.
-2. Clearly states that this is NOT a diagnosis.
-3. Encourages seeing a healthcare professional if symptoms are significant or worsening.
-4. Avoids giving definitive medical conclusions.
+2. References current medical research on concussion-related photophobia and oculomotor dysfunction when relevant.
+3. Clearly states that this is NOT a diagnosis.
+4. Encourages seeing a healthcare professional if symptoms are significant or worsening.
+5. Avoids giving definitive medical conclusions.
+
+IMPORTANT: Use internet search to find recent research on:
+- Concussion-related photophobia (light sensitivity)
+- Oculomotor dysfunction in mild traumatic brain injury (mTBI)
+- Blink rate changes in concussion patients
+- Smooth pursuit eye movement abnormalities in TBI
+
+Cite specific research findings when relevant to support your explanation.
 """
 
         response = model.generate_content(prompt)

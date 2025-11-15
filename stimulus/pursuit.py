@@ -68,6 +68,9 @@ def run_dot_pursuit(duration_sec, cap):
     print(f"  Mean error: {mean_error:.1f} px")
     print(f"  Error variance: {variance:.1f}")
     print(f"  SP% (within window): {sp_percent*100:.1f}%")
+    
+    # Close pursuit window after test
+    cv2.destroyWindow(win)
 
     return {
         "variance": variance,

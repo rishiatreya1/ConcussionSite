@@ -225,17 +225,49 @@ def run_phase(cap, flicker_window_name, phase_name, duration_sec, flicker=False)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    # Debug
+    # Debug and validation
     face_detection_rate = (face_detected_count / frame_count * 100) if frame_count > 0 else 0.0
     avg_ear_value = float(np.mean(ear_values)) if ear_values else 0.0
     min_ear_value = float(np.min(ear_values)) if ear_values else 0.0
     max_ear_value = float(np.max(ear_values)) if ear_values else 0.0
+    
+    # Validation: Check if eye tracking is actually working
+    tracking_valid = True
+    validation_warnings = []
+    
+    if face_detection_rate < 50:
+        tracking_valid = False
+        validation_warnings.append(f"⚠️  LOW face detection rate ({face_detection_rate:.1f}%) - results may be unreliable")
+    
+    if len(ear_values) == 0:
+        tracking_valid = False
+        validation_warnings.append("⚠️  NO EAR values recorded - eye tracking not working")
+    elif avg_ear_value < 0.1 or avg_ear_value > 0.5:
+        validation_warnings.append(f"⚠️  Unusual EAR range ({min_ear_value:.3f}-{max_ear_value:.3f}) - check lighting/positioning")
+    
+    if len(gaze_distances) == 0:
+        validation_warnings.append("⚠️  NO gaze measurements - face may not be detected properly")
+    elif len(gaze_distances) < frame_count * 0.3:
+        validation_warnings.append(f"⚠️  Only {len(gaze_distances)}/{frame_count} gaze measurements - tracking may be incomplete")
 
     print(f"\n[DEBUG {phase_name}]")
     print(f"  Frames: {frame_count}")
     print(f"  Face detected: {face_detected_count} ({face_detection_rate:.1f}%)")
     print(f"  EAR avg: {avg_ear_value:.3f}, min: {min_ear_value:.3f}, max: {max_ear_value:.3f}")
     print(f"  Blinks: {blink_count}")
+    print(f"  Gaze measurements: {len(gaze_distances)}")
+    
+    if validation_warnings:
+        print(f"\n[VALIDATION WARNINGS]")
+        for warning in validation_warnings:
+            print(f"  {warning}")
+    
+    if not tracking_valid:
+        print(f"\n❌ WARNING: Eye tracking validation failed for {phase_name} phase!")
+        print("   Results may be inaccurate. Please ensure:")
+        print("   - Good lighting on your face")
+        print("   - Looking directly at the camera")
+        print("   - Face is clearly visible (no obstructions)")
 
     return {
         "blink_count": blink_count,
@@ -243,7 +275,9 @@ def run_phase(cap, flicker_window_name, phase_name, duration_sec, flicker=False)
         "gaze_distances": gaze_distances,
         "duration": duration_sec,
         "face_detection_rate": face_detection_rate,
-        "avg_ear": avg_ear_value
+        "avg_ear": avg_ear_value,
+        "tracking_valid": tracking_valid,
+        "validation_warnings": validation_warnings
     }
 
 
@@ -273,6 +307,9 @@ def main():
 
         # Flicker phase
         flicker_metrics = run_phase(cap, flicker_window, "Flicker", duration_sec=15, flicker=True)
+        
+        # Close flicker window after test ends
+        cv2.destroyWindow(flicker_window)
 
         # Smooth pursuit phase
         print("\nPreparing smooth pursuit test...")
