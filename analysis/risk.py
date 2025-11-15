@@ -74,11 +74,11 @@ def assess_concussion_risk(metrics, symptoms, pursuit_metrics=None):
         risk_level = "HIGH"
         recommendation = ("URGENT: Consult a healthcare professional as soon as possible. "
                           "Several objective signs AND symptoms suggest possible concussion-related issues.")
-    elif risk_score >= 4:
+    elif risk_score >= 5:
         risk_level = "MODERATE"
         recommendation = ("RECOMMENDED: Seek medical evaluation. There are meaningful indicators of light sensitivity "
                           "and/or oculomotor dysfunction that could be concussion-related.")
-    elif risk_score >= 2:
+    elif risk_score >= 3:
         risk_level = "LOW"
         recommendation = ("MONITOR: Mild indicators present. Monitor symptoms over time and seek care if they persist or worsen.")
     else:

@@ -20,6 +20,7 @@ from analysis.metrics import calculate_metrics
 from analysis.risk import assess_concussion_risk
 
 from ai import generate_summary
+from ai.ai_conversation import start_conversation
 
 mp_drawing = mp.solutions.drawing_utils
 
@@ -241,9 +242,9 @@ def run_phase(cap, flicker_window_name, phase_name, duration_sec, flicker=False)
     
     if len(ear_values) == 0:
         tracking_valid = False
-        validation_warnings.append("⚠️  NO EAR values recorded - eye tracking not working")
+        validation_warnings.append("⚠️  NO Eye Aspect Ratio (EAR) values recorded - eye tracking not working")
     elif avg_ear_value < 0.1 or avg_ear_value > 0.5:
-        validation_warnings.append(f"⚠️  Unusual EAR range ({min_ear_value:.3f}-{max_ear_value:.3f}) - check lighting/positioning")
+        validation_warnings.append(f"⚠️  Unusual Eye Aspect Ratio (EAR) range ({min_ear_value:.3f}-{max_ear_value:.3f}) - check lighting/positioning")
     
     if len(gaze_distances) == 0:
         validation_warnings.append("⚠️  NO gaze measurements - face may not be detected properly")
@@ -253,7 +254,7 @@ def run_phase(cap, flicker_window_name, phase_name, duration_sec, flicker=False)
     print(f"\n[DEBUG {phase_name}]")
     print(f"  Frames: {frame_count}")
     print(f"  Face detected: {face_detected_count} ({face_detection_rate:.1f}%)")
-    print(f"  EAR avg: {avg_ear_value:.3f}, min: {min_ear_value:.3f}, max: {max_ear_value:.3f}")
+    print(f"  Eye Aspect Ratio (EAR) avg: {avg_ear_value:.3f}, min: {min_ear_value:.3f}, max: {max_ear_value:.3f}")
     print(f"  Blinks: {blink_count}")
     print(f"  Gaze measurements: {len(gaze_distances)}")
     
@@ -353,15 +354,13 @@ def main():
         print(f"\n💡 Recommendation:")
         print(f"   {risk_assessment['recommendation']}")
 
-        # Gemini summary
+        # Interactive conversational agent
         print("\n" + "=" * 50)
-        print("AI SUMMARY (Gemini)")
+        print("AI ASSISTANT")
         print("=" * 50)
-        ai_summary = generate_summary(metrics, symptoms, risk_assessment, pursuit_metrics)
-        if ai_summary:
-            print(ai_summary)
-        else:
-            print("(AI summary unavailable – using local risk explanation only.)")
+        
+        # Start interactive conversation instead of static summary
+        start_conversation(metrics, symptoms, risk_assessment, pursuit_metrics)
 
         print("\n" + "=" * 50)
         print("⚠️  IMPORTANT DISCLAIMER")
