@@ -26,3 +26,7 @@ Thumbs.db
 # MediaPipe models cache (if any)
 *.tflite
 
+# Gmail OAuth credentials
+email_service/credentials.json
+email_service/token.json
+

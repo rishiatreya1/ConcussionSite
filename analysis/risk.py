@@ -1,4 +1,4 @@
-def assess_concussion_risk(metrics, symptoms, pursuit_metrics=None):
+def assess_concussion_risk(metrics, symptoms, pursuit_metrics=None, subjective_score=None):
     """
     Combine:
       - Blink metrics
@@ -68,6 +68,20 @@ def assess_concussion_risk(metrics, symptoms, pursuit_metrics=None):
     elif symptom_count == 1:
         risk_score += 1
         risk_factors.append("One concussion-like symptom reported.")
+    
+    # Subjective score adjustment (lower score = higher risk)
+    if subjective_score is not None:
+        if subjective_score <= 3:
+            risk_score += 0  # Already accounted for in symptoms
+        elif subjective_score <= 6:
+            risk_score += 1
+            risk_factors.append(f"Subjective feeling score: {subjective_score}/10 (moderate concern).")
+        elif subjective_score <= 8:
+            risk_score += 2
+            risk_factors.append(f"Subjective feeling score: {subjective_score}/10 (elevated concern).")
+        else:  # 9-10
+            risk_score += 3
+            risk_factors.append(f"Subjective feeling score: {subjective_score}/10 (high concern).")
 
     # Risk level mapping
     if risk_score >= 7:

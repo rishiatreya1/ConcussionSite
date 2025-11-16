@@ -53,34 +53,181 @@ ConcussionSite is based on established research in concussion assessment and eye
    ```bash
    pip install -r requirements.txt
    ```
-3. Create a `.env` file in the project root and add your OpenAI API key:
+3. Create a `.env` file in the project root and add your Gemini API key:
    ```
-   OPENAI_API_KEY=your_key_here
+   GEMINI_API_KEY=your_key_here
    ```
-   (Note: The tool will still run without the API key, but AI summary generation will be skipped)
+   Get your API key from [Google AI Studio](https://aistudio.google.com/)
+   
+4. (Optional) Set up Gmail OAuth for email sending:
+   - Follow instructions in `email_service/GMAIL_SETUP.md`
+   - Place `credentials.json` in the `email_service/` directory
 
 ## Usage
 
-Run the screening tool:
+### Running the Full System
+
+Run the complete screening with AI assistant:
 ```bash
-python3 concussion_site.py
+python3 main.py
 ```
 
-Follow the on-screen instructions:
+This will:
+1. Run baseline eye tracking (8 seconds)
+2. Run flicker sensitivity test (15 seconds)
+3. Run smooth pursuit test (12 seconds)
+4. Ask for subjective feeling score (1-10)
+5. Ask symptom questions
+6. Calculate risk assessment
+7. **Launch web-based AI assistant** (opens in browser at http://localhost:5000)
+
+### Running Agent System Directly
+
+To test the agent system independently:
+```bash
+python3 agents/runner.py
+```
+(Note: You'll need to provide test data or modify the runner to include test metrics)
+
+### Follow the On-Screen Instructions
+
 - Look at the webcam during the baseline phase
 - Try to keep looking at the flicker window during the flicker phase
-- Answer the symptom questions
-- Review the AI-generated summary
+- Follow the moving dot during smooth pursuit test
+- Answer the subjective feeling question (1-10 scale)
+- Answer symptom questions (y/n)
+- **Interact with the AI assistant in your web browser**
 
-Press 'q' at any time to quit early.
+Press 'q' during visual tests to quit early.
 
 ## Technical Details
 
+### Core Screening Components
 - **Webcam Capture**: Uses OpenCV for real-time video capture
 - **Face Tracking**: MediaPipe FaceMesh with 468 landmarks
-- **Blink Detection**: EAR (Eye Aspect Ratio) algorithm
+- **Blink Detection**: EAR (Eye Aspect Ratio) algorithm with adaptive thresholds
 - **Gaze Tracking**: Distance-based calculation from image center
-- **AI Analysis**: OpenAI GPT-4o-mini for summary generation
+- **Smooth Pursuit**: Vertical sinusoidal dot tracking test
+
+### Multi-Agent System Architecture
+
+ConcussionSite uses a hierarchical multi-agent system:
+
+```
+Root Agent (concussion_care_root_agent)
+├── Question Agent (tool functions)
+│   ├── explain_metric()
+│   ├── ask_followup_question()
+│   └── simplify_results()
+└── Writing Agent (tool functions)
+    ├── draft_email_for_mckinley()
+    └── send_email_oauth()
+```
+
+**Components:**
+- **Root Agent** (`agents/root_agent.py`): Manages conversation flow, coordinates tools
+- **Tools** (`agents/tools.py`): Modular functions for email drafting, explanations, questions
+- **Prompts** (`agents/prompt.py`): System prompts and templates
+- **Setup** (`agents/setup.py`): LiteLLM wrapper for Gemini models
+- **Runner** (`agents/runner.py`): Flask web UI for browser-based interaction
+- **Email Service** (`email_service/email_service.py`): Gmail OAuth integration
+
+**AI Stack:**
+- **LiteLLM**: Wrapper for multiple LLM providers
+- **Gemini 2.5 Flash**: Primary model (fast, cost-effective)
+- **Flask**: Web UI framework
+- **Gmail API**: OAuth email sending
+
+### Data Flow
+
+```
+main.py
+  ↓
+Screening Tests (baseline, flicker, pursuit)
+  ↓
+Metrics Calculation
+  ↓
+Risk Assessment (includes subjective_score)
+  ↓
+agents/runner.py → start_conversation()
+  ↓
+Root Agent initialized with context
+  ↓
+Web UI launched (Flask)
+  ↓
+User interacts via browser
+  ↓
+Root Agent processes messages
+  ↓
+Tools called as needed (email, explanations)
+  ↓
+Conversation continues until user ends session
+```
+
+## Multi-Agent System Guide
+
+### How to Extend Agents
+
+1. **Add New Tools**: Edit `agents/tools.py`
+   ```python
+   def my_new_tool(param1, param2):
+       """Tool description."""
+       logger.debug("my_new_tool called")
+       # Your logic here
+       return result
+   ```
+
+2. **Modify Agent Behavior**: Edit `agents/prompt.py`
+   - Update `ROOT_AGENT_SYSTEM_PROMPT` to change agent personality
+   - Add new templates for specific use cases
+
+3. **Add New Agents**: Create new agent class in `agents/`
+   - Follow the pattern in `root_agent.py`
+   - Initialize with `agents/setup.py`
+   - Integrate into conversation flow
+
+### How to Add More Tools
+
+1. Define function in `agents/tools.py`
+2. Add docstring explaining what it does
+3. Add logging for debugging
+4. Update `root_agent.py` to call the tool when appropriate
+5. Test the tool in conversation
+
+### Agent Workflow
+
+1. **Initialization**: Root agent receives screening data
+2. **Greeting**: Agent greets user with personalized message
+3. **Conversation Loop**:
+   - User sends message
+   - Root agent processes intent
+   - Tool calls triggered if needed
+   - Response generated via Gemini
+   - History maintained for context
+4. **Escalation**: If risk_score >= 7, agent offers email drafting
+5. **Email Flow**:
+   - Agent drafts email
+   - Shows draft to user
+   - Asks for confirmation
+   - Sends via Gmail OAuth (if confirmed)
+6. **Session End**: User says "stop/exit/quit" → graceful exit
+
+### Configuration
+
+**Environment Variables** (`.env`):
+```
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+**Model Configuration** (`agents/setup.py`):
+- Default model: `gemini/gemini-2.5-flash`
+- Temperature: 0.7 (balanced)
+- Max tokens: 1000
+
+**Gmail OAuth** (`email_service/`):
+- See `email_service/GMAIL_SETUP.md` for setup instructions
+- Credentials stored in `email_service/credentials.json` (not in git)
+- Token stored in `email_service/token.json` (auto-generated)
 
 ## Future Enhancements
 

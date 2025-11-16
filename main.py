@@ -332,14 +332,31 @@ def main():
         print(f"Smooth pursuit variance  : {pursuit_metrics['variance']:.1f}")
         print(f"SP% (in tracking window) : {pursuit_metrics['sp_percent']*100:.1f}%")
 
+        # Subjective feeling score (1-10)
+        print("\n" + "=" * 50)
+        print("SUBJECTIVE ASSESSMENT")
+        print("=" * 50)
+        while True:
+            try:
+                subjective_input = input("Before we continue, how are you feeling right now on a scale of 1-10? (1=worst, 10=best): ").strip()
+                subjective_score = int(subjective_input)
+                if 1 <= subjective_score <= 10:
+                    break
+                else:
+                    print("Please enter a number between 1 and 10.")
+            except ValueError:
+                print("Please enter a valid number between 1 and 10.")
+        
+        print(f"Subjective feeling score: {subjective_score}/10\n")
+
         # Symptoms
         symptoms = ask_symptoms()
 
-        # Risk assessment
+        # Risk assessment (includes subjective_score)
         print("\n" + "=" * 50)
         print("CONCUSSION-LIKE RISK ASSESSMENT")
         print("=" * 50)
-        risk_assessment = assess_concussion_risk(metrics, symptoms, pursuit_metrics)
+        risk_assessment = assess_concussion_risk(metrics, symptoms, pursuit_metrics, subjective_score)
 
         print(f"\n🔍 RISK LEVEL: {risk_assessment['risk_level']}")
         print(f"📊 Risk Score: {risk_assessment['risk_score']}/10")
@@ -359,8 +376,15 @@ def main():
         print("AI ASSISTANT")
         print("=" * 50)
         
-        # Start interactive conversation instead of static summary
-        start_conversation(metrics, symptoms, risk_assessment, pursuit_metrics)
+        # Start interactive conversation with ADK agent system
+        from agents.runner import start_conversation
+        start_conversation(
+            metrics=metrics,
+            pursuit_metrics=pursuit_metrics,
+            symptoms=symptoms,
+            subjective_score=subjective_score,
+            risk_assessment=risk_assessment
+        )
 
         print("\n" + "=" * 50)
         print("⚠️  IMPORTANT DISCLAIMER")
