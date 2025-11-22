@@ -66,7 +66,13 @@ ConcussionSite is based on established research in concussion assessment and eye
 Tip. Do this through your virtual env
      ```
      python3 -m venv venv
+     ```
+     - Set venv
+     ```
      source venv/bin/activate
+     ```
+     - Install
+     ```
      pip install -r requirements.txt
      ```
 
