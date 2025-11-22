@@ -63,6 +63,13 @@ ConcussionSite is based on established research in concussion assessment and eye
    - Follow instructions in `email_service/GMAIL_SETUP.md`
    - Place `credentials.json` in the `email_service/` directory
 
+Tip. Do this through your virtual env
+     ```
+     python3 -m venv venv
+     source venv/bin/activate
+     pip install -r requirements.txt
+     ```
+
 ## Usage
 
 ### Running the Full System
